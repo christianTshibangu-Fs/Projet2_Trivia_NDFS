@@ -10,14 +10,14 @@ from models import setup_db, Question, Category,db
 QUESTIONS_PER_PAGE = 10
 
 def paginate_questions(request, selection):
-    page = request.args.get("page", 1, type=int)
+    page = request.args.get('page', 1, type=int)
     start = (page - 1) * QUESTIONS_PER_PAGE
     end = start + QUESTIONS_PER_PAGE
 
     questions = [question.format() for question in selection]
-    current_question = questions[start:end]
+    current_questions = questions[start:end]
 
-    return current_question
+    return current_questions
 
 def create_app(test_config=None):
     # create and configure the app
@@ -75,7 +75,6 @@ def create_app(test_config=None):
     ten questions per page and pagination at the bottom of the screen for three pages.
     Clicking on the page numbers should update the questions.
     """
-
     @app.route('/questions')
     def retrieve_questions():
         selection = Question.query.order_by(Question.id).all()
@@ -87,12 +86,14 @@ def create_app(test_config=None):
             abort(404)
 
         return jsonify({
-            'success': True,
-            'questions': current_questions,
-            'total_questions': len(selection),
-            'categories': {category.id: category.type for category in categories},
-            'current_category': None
+            "success": True,
+            "questions": current_questions,
+            "total_questions": len(selection),
+            "categories": {category.id: category.type for category in categories},
+            "current_category": None
         })   
+
+        
 
     """
     @TODO:
@@ -176,20 +177,21 @@ def create_app(test_config=None):
     @app.route("/questions/search", methods=['POST'])
     def search_questions(): 
         body = request.get_json()
-        search_term = body.get("search_term", None)
-        questions = db.session.query(Question).filter(Question.question.ilike(f'%{search_term}%')).all()
-        current_questions = paginate_questions(request, questions)
-
-        if len(current_questions) == 0:
-            abort(404)
-
-        return jsonify(
-            {
+        search_term = body.get('searchTerm', None)
+        if search_term:
+            questions = Question.query.filter(
+                Question.question.ilike(f'%{search_term}%')).all()
+            return jsonify({
                 "success": True,
-                "questions": current_questions,
+                "questions":[question.format() for question in questions],
                 "total_questions": len(questions),
-            }
-        )
+                "current_category": None
+            })
+        abort(404)
+
+
+
+
 
     """
     @TODO:
@@ -199,20 +201,20 @@ def create_app(test_config=None):
     categories in the left column will cause only questions of that
     category to be shown.
     """
-    @app.route("/categories/<int:category_id>/questions")
-    def retrieve_questions_by_categorie(category_id):
-        category = Category.query.filter_by(id=category_id).first()
-        data = []
+    @app.route("/categories/<int:category_id>/questions", methods=['GET'])
+    def retrieve_questions_by_category(category_id):
+        category = Category.query.filter(Category.id==category_id).first()
         if category:
-           data = category.__dict__
-           selection = db.session.query(Question).filter_by(category=category.id).all()               
-           current_questions = paginate_questions(request, selection)
+
+           questions = db.session.query(Question).filter_by(category=category.id).all()               
+           current_questions = paginate_questions(request, questions)
            if len(current_questions) == 0:
                abort(404)
 
            return jsonify(
                 {
                     "success": True,
+                    "questions": [question.format() for question in questions],
                     "category_questions": current_questions,
                     "total_category_questions": len(Question.query.all()),
                     "current_category": category_id

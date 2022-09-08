@@ -147,7 +147,7 @@ class TriviaTestCase(unittest.TestCase):
 
     # find question by term search
     def test_search_question(self):
-        res = self.client().post("/questions/search", json={"search_term":"the"})
+        res = self.client().post("/questions/search", json={"searchTerm":"the"})
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 200)
@@ -157,7 +157,7 @@ class TriviaTestCase(unittest.TestCase):
 
     # error occurs when argument not exist
     def test_404_Invalid_search_question(self):
-        res = self.client().post("/questions/search", json={"search_term":"ZOOOOOOOOOOOOOOO"})
+        res = self.client().post("/questions/search", json={"searchTerm":""})
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 404)
